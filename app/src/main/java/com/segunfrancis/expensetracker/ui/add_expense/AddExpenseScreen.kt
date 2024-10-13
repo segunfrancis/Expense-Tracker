@@ -1,5 +1,6 @@
 package com.segunfrancis.expensetracker.ui.add_expense
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,22 +20,41 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 
 @Composable
-fun AddExpenseScreen() {
-    val viewModel = viewModel<AddExpenseViewModel>()
+fun AddExpenseScreen(onNavigateUp: () -> Unit) {
+    val viewModel = hiltViewModel<AddExpenseViewModel>()
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
+
+    LaunchedEffect(Unit) {
+        viewModel.action.collect {
+            when (it) {
+                is AddExpenseAction.ShowMessage -> Toast.makeText(
+                    context,
+                    it.message,
+                    Toast.LENGTH_LONG
+                ).show()
+
+                AddExpenseAction.NavigateUp -> {
+                    onNavigateUp()
+                }
+            }
+        }
+    }
 
     AddExpenseContent(state = uiState, onAction = {
         viewModel.handleAction(it)
@@ -96,7 +116,7 @@ fun AddExpenseContent(state: AddExpenseUiState, onAction: (AddExpenseScreenActio
                 modifier = Modifier
                     .fillMaxWidth()
                     .menuAnchor(),
-                value = state.splitOption?.value.orEmpty(),
+                value = state.splitOption,
                 onValueChange = {},
                 readOnly = true,
                 supportingText = { Text("* Required") },
@@ -115,7 +135,7 @@ fun AddExpenseContent(state: AddExpenseUiState, onAction: (AddExpenseScreenActio
                         text = { Text(text = option.value) },
                         onClick = {
                             expanded = false
-                            onAction(AddExpenseScreenActions.OnSplitOptionChange(option))
+                            onAction(AddExpenseScreenActions.OnSplitOptionChange(option.value))
                         }
                     )
                 }
@@ -132,7 +152,10 @@ fun AddExpenseContent(state: AddExpenseUiState, onAction: (AddExpenseScreenActio
         }
 
         ElevatedButton(
-            onClick = {},
+            onClick = {
+                onAction(AddExpenseScreenActions.OnAddClick)
+
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 24.dp),
@@ -158,5 +181,6 @@ data class SplitOption(val id: Int, val value: String)
 sealed interface AddExpenseScreenActions {
     data class OnDescriptionChange(val description: String) : AddExpenseScreenActions
     data class OnPriceChange(val price: String) : AddExpenseScreenActions
-    data class OnSplitOptionChange(val splitOption: SplitOption) : AddExpenseScreenActions
+    data class OnSplitOptionChange(val splitOption: String) : AddExpenseScreenActions
+    data object OnAddClick : AddExpenseScreenActions
 }

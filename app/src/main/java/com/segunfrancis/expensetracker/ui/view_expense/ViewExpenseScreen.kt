@@ -16,13 +16,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.segunfrancis.expensetracker.ui.components.ViewExpenseTextComponent
 
 @Composable
 fun ViewExpenseScreen() {
-    val viewModel: ViewExpenseViewModel = viewModel()
-    val uiState by viewModel.uiState.collectAsState()
+    val viewModel: ViewExpenseViewModel = hiltViewModel()
+    val uiState by viewModel.uiState.collectAsState(ViewExpenseUiState())
     ViewExpenseContent(state = uiState)
 }
 
@@ -36,9 +36,8 @@ fun ViewExpenseContent(state: ViewExpenseUiState) {
         Spacer(modifier = Modifier.height(24.dp))
         ViewExpenseTextComponent(title = "Price", value = state.price)
         Spacer(modifier = Modifier.height(24.dp))
-        state.splitOption?.let {
-            ViewExpenseTextComponent(title = "Split Option", value = it.value)
-        }
+        ViewExpenseTextComponent(title = "Split Option", value = state.splitOption)
+        Spacer(modifier = Modifier.height(24.dp))
         Text(
             text = "Receipt",
             style = MaterialTheme.typography.bodySmall,

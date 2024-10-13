@@ -10,7 +10,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -19,24 +18,24 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.segunfrancis.expensetracker.ui.components.ExpenseItem
 
 @Composable
-fun ExpensesScreen(onViewExpenseClick: (Long) -> Unit) {
-    val viewModel: ExpensesViewModel = viewModel()
+fun ExpensesScreen(onViewExpenseClick: (Long) -> Unit, onEditExpenseClick: (Long) -> Unit) {
+    val viewModel: ExpensesViewModel = hiltViewModel()
     val uiState by viewModel.uiState.collectAsState()
     ExpensesContent(state = uiState, onAction = {
-        if (it is ExpensesAction.OnItemClick) {
-            onViewExpenseClick(it.id)
-        } else
-            viewModel.handleAction(it)
+        when (it) {
+            is ExpensesAction.OnItemClick -> onViewExpenseClick(it.id)
+            is ExpensesAction.OnEditClick -> onEditExpenseClick(it.id)
+            else -> viewModel.handleAction(it)
+        }
     })
 }
 
 @Composable
 fun ExpensesContent(state: ExpensesUiState, onAction: (ExpensesAction) -> Unit) {
-
     Column(modifier = Modifier.fillMaxSize()) {
         when (state) {
             is ExpensesUiState.Expenses -> ExpensesState(
@@ -54,7 +53,7 @@ fun ExpensesState(expenses: List<Expense>, onExpenseAction: (ExpensesAction) -> 
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(16.dp),
-            contentPadding = PaddingValues(horizontal = 16.dp),
+            contentPadding = PaddingValues(16.dp),
         ) {
             items(expenses) { expense ->
                 ExpenseItem(

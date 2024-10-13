@@ -14,22 +14,24 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavDestination
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDestination.Companion.hasRoute
+import androidx.navigation.toRoute
 import com.segunfrancis.expensetracker.ExpenseTrackerRoute
 import com.segunfrancis.expensetracker.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ExpenseTrackerToolbar(
-    navDestination: NavDestination?,
+    backStackEntry: NavBackStackEntry?,
     onBackClick: () -> Unit
 ) {
     val title = when {
-        navDestination?.hasRoute(ExpenseTrackerRoute.ExpensesRoute::class) == true -> "Expenses"
-        navDestination?.hasRoute(ExpenseTrackerRoute.ViewExpenseRoute::class) == true -> "View Expense"
-        navDestination?.hasRoute(ExpenseTrackerRoute.AddExpenseRoute::class) == true -> {
-            if (navDestination.arguments.containsKey("id"))
+        backStackEntry?.destination?.hasRoute(ExpenseTrackerRoute.ExpensesRoute::class) == true -> "Expenses"
+        backStackEntry?.destination?.hasRoute(ExpenseTrackerRoute.ViewExpenseRoute::class) == true -> "View Expense"
+        backStackEntry?.destination?.hasRoute(ExpenseTrackerRoute.AddExpenseRoute::class) == true -> {
+            val route: ExpenseTrackerRoute.AddExpenseRoute = backStackEntry.toRoute()
+            if (route.id != null)
                 "Edit Expense"
             else
                 "Add Expense"
@@ -40,7 +42,7 @@ fun ExpenseTrackerToolbar(
     TopAppBar(
         title = { Text(text = title) }, modifier = Modifier.fillMaxWidth(),
         navigationIcon = {
-            if (navDestination?.hasRoute(ExpenseTrackerRoute.ExpensesRoute::class) == false) {
+            if (backStackEntry?.destination?.hasRoute(ExpenseTrackerRoute.ExpensesRoute::class) == false) {
                 Icon(
                     painter = painterResource(R.drawable.ic_arrow_back),
                     contentDescription = "Go back",
@@ -56,5 +58,5 @@ fun ExpenseTrackerToolbar(
 @Preview
 @Composable
 fun ExpenseTrackerToolbarPreview() {
-    ExpenseTrackerToolbar(NavDestination("")) {}
+    ExpenseTrackerToolbar(backStackEntry = null) {}
 }

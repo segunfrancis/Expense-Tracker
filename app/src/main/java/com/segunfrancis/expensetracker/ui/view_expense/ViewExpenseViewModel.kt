@@ -1,23 +1,46 @@
 package com.segunfrancis.expensetracker.ui.view_expense
 
+import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
-import com.segunfrancis.expensetracker.ui.add_expense.SplitOption
+import androidx.lifecycle.viewModelScope
+import com.segunfrancis.expensetracker.data.ExpenseTrackerDao
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import javax.inject.Inject
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
-class ViewExpenseViewModel @Inject constructor(savedStateHandle: SavedStateHandle) : ViewModel() {
-    private val _uiState = MutableStateFlow(ViewExpenseUiState())
-    val uiState = _uiState.asStateFlow()
+class ViewExpenseViewModel @Inject constructor(
+    savedStateHandle: SavedStateHandle,
+    dispatcher: CoroutineDispatcher,
+    private val dao: ExpenseTrackerDao
+) : ViewModel() {
 
-
+    val uiState = savedStateHandle.getStateFlow("id", 0L)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, 0L)
+        .flatMapLatest {
+            dao.getExpense(it).map { expense ->
+                ViewExpenseUiState(
+                    description = expense.description,
+                    price = expense.price.toString(),
+                    splitOption = expense.splitOption
+                )
+            }
+        }.catch {
+            Log.e("ViewExpenseViewModel", "Error: ${it.localizedMessage}", it)
+        }.flowOn(dispatcher)
 }
 
 data class ViewExpenseUiState(
     val description: String = "",
     val price: String = "",
-    val splitOption: SplitOption? = null
+    val splitOption: String = ""
 )

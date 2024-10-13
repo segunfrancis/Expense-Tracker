@@ -24,7 +24,9 @@ import com.segunfrancis.expensetracker.ui.components.ExpenseTrackerToolbar
 import com.segunfrancis.expensetracker.ui.expenses.ExpensesScreen
 import com.segunfrancis.expensetracker.ui.theme.ExpenseTrackerTheme
 import com.segunfrancis.expensetracker.ui.view_expense.ViewExpenseScreen
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -56,7 +58,7 @@ class MainActivity : ComponentActivity() {
                     },
                         topBar = {
                             ExpenseTrackerToolbar(
-                                backStackEntry?.destination
+                                backStackEntry
                             ) { navController.navigateUp() }
                         }) {
                         NavHost(
@@ -65,13 +67,21 @@ class MainActivity : ComponentActivity() {
                             modifier = Modifier.padding(it)
                         ) {
                             composable<ExpenseTrackerRoute.ExpensesRoute> {
-                                ExpensesScreen { id -> navController.navigate(ExpenseTrackerRoute.ViewExpenseRoute(id)) }
+                                ExpensesScreen(
+                                    onViewExpenseClick = { id ->
+                                        navController.navigate(
+                                            ExpenseTrackerRoute.ViewExpenseRoute(id)
+                                        )
+                                    }, onEditExpenseClick = { id ->
+                                        navController.navigate(ExpenseTrackerRoute.AddExpenseRoute(id))
+                                    }
+                                )
                             }
                             composable<ExpenseTrackerRoute.ViewExpenseRoute> {
                                 ViewExpenseScreen()
                             }
                             composable<ExpenseTrackerRoute.AddExpenseRoute> {
-                                AddExpenseScreen()
+                                AddExpenseScreen(onNavigateUp = { navController.navigateUp() })
                             }
                         }
                     }
