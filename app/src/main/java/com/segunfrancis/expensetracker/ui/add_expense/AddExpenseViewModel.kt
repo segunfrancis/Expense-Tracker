@@ -49,7 +49,8 @@ class AddExpenseViewModel @Inject constructor(
                             state.copy(
                                 description = it.description,
                                 price = it.price.toString(),
-                                splitOption = it.splitOption
+                                splitOption = it.splitOption,
+                                image = it.image
                             )
                         }
                         handleButtonVisibility()
@@ -73,12 +74,17 @@ class AddExpenseViewModel @Inject constructor(
         handleButtonVisibility()
     }
 
+    fun setImageByteArray(image: ByteArray) {
+        _uiState.update { it.copy(image = image) }
+    }
+
     fun handleAction(action: AddExpenseScreenActions) {
         when (action) {
             is AddExpenseScreenActions.OnDescriptionChange -> setDescription(action.description)
             is AddExpenseScreenActions.OnPriceChange -> setPrice(action.price)
             is AddExpenseScreenActions.OnSplitOptionChange -> setSplitOption(action.splitOption)
             AddExpenseScreenActions.OnAddClick -> addExpense()
+            else -> {}
         }
     }
 
@@ -106,7 +112,8 @@ class AddExpenseViewModel @Inject constructor(
                                 id = id,
                                 price = it,
                                 description = uiState.value.description,
-                                splitOption = uiState.value.splitOption
+                                splitOption = uiState.value.splitOption,
+                                image = uiState.value.image
                             )
                         )
                     } else {
@@ -114,7 +121,8 @@ class AddExpenseViewModel @Inject constructor(
                             ExpenseEntity(
                                 price = it,
                                 description = uiState.value.description,
-                                splitOption = uiState.value.splitOption
+                                splitOption = uiState.value.splitOption,
+                                image = uiState.value.image
                             )
                         )
                     }
@@ -129,6 +137,7 @@ data class AddExpenseUiState(
     val description: String = "",
     val price: String = "",
     val splitOption: String = "",
+    val image: ByteArray? = null,
     val isButtonEnabled: Boolean = false
 )
 

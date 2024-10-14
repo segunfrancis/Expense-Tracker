@@ -1,9 +1,16 @@
 package com.segunfrancis.expensetracker.ui.add_expense
 
+import android.Manifest
+import android.net.Uri
+import android.os.Build
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -27,12 +34,17 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.segunfrancis.expensetracker.bitmapToByteArray
+import com.segunfrancis.expensetracker.byteArrayToBitmap
+import com.segunfrancis.expensetracker.uriToBitmap
 
 @Composable
 fun AddExpenseScreen(onNavigateUp: () -> Unit) {
@@ -56,8 +68,42 @@ fun AddExpenseScreen(onNavigateUp: () -> Unit) {
         }
     }
 
+    var imageUri by remember { mutableStateOf<Uri?>(null) }
+
+    val imagePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        imageUri = uri
+        uri?.let {
+            uriToBitmap(context, uri)?.let { bitmap ->
+                viewModel.setImageByteArray(bitmapToByteArray(bitmap))
+            }
+        }
+    }
+
+    val viewImagesPermissionLauncher =
+        rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+            if (isGranted) {
+                imagePickerLauncher.launch("image/*")
+            } else {
+                Toast.makeText(
+                    context,
+                    "Unable to proceed because image permission is not granted",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
+
     AddExpenseContent(state = uiState, onAction = {
-        viewModel.handleAction(it)
+        if (it is AddExpenseScreenActions.OnAddImageClick) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                viewImagesPermissionLauncher.launch(Manifest.permission.READ_MEDIA_IMAGES)
+            } else {
+                viewImagesPermissionLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
+            }
+        } else {
+            viewModel.handleAction(it)
+        }
     })
 }
 
@@ -143,7 +189,9 @@ fun AddExpenseContent(state: AddExpenseUiState, onAction: (AddExpenseScreenActio
         }
 
         TextButton(
-            onClick = {},
+            onClick = {
+                onAction(AddExpenseScreenActions.OnAddImageClick)
+            },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 24.dp)
@@ -151,10 +199,19 @@ fun AddExpenseContent(state: AddExpenseUiState, onAction: (AddExpenseScreenActio
             Text("Upload receipt")
         }
 
+        state.image?.let {
+            Image(
+                bitmap = byteArrayToBitmap(it).asImageBitmap(),
+                contentDescription = "Uploaded image",
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxWidth().heightIn(max = 400.dp)
+                    .padding(horizontal = 16.dp)
+            )
+        }
+
         ElevatedButton(
             onClick = {
                 onAction(AddExpenseScreenActions.OnAddClick)
-
             },
             modifier = Modifier
                 .fillMaxWidth()
@@ -183,4 +240,5 @@ sealed interface AddExpenseScreenActions {
     data class OnPriceChange(val price: String) : AddExpenseScreenActions
     data class OnSplitOptionChange(val splitOption: String) : AddExpenseScreenActions
     data object OnAddClick : AddExpenseScreenActions
+    data object OnAddImageClick : AddExpenseScreenActions
 }

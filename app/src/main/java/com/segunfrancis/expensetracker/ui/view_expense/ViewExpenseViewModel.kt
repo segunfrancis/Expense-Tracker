@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import java.text.NumberFormat
 import javax.inject.Inject
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -30,8 +31,9 @@ class ViewExpenseViewModel @Inject constructor(
             dao.getExpense(it).map { expense ->
                 ViewExpenseUiState(
                     description = expense.description,
-                    price = expense.price.toString(),
-                    splitOption = expense.splitOption
+                    price = NumberFormat.getNumberInstance().format(expense.price),
+                    splitOption = expense.splitOption,
+                    image = expense.image
                 )
             }
         }.catch {
@@ -42,5 +44,6 @@ class ViewExpenseViewModel @Inject constructor(
 data class ViewExpenseUiState(
     val description: String = "",
     val price: String = "",
-    val splitOption: String = ""
+    val splitOption: String = "",
+    val image: ByteArray? = null
 )

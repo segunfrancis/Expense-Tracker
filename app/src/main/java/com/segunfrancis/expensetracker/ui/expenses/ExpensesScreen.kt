@@ -55,9 +55,10 @@ fun ExpensesState(expenses: List<Expense>, onExpenseAction: (ExpensesAction) -> 
             verticalArrangement = Arrangement.spacedBy(16.dp),
             contentPadding = PaddingValues(16.dp),
         ) {
-            items(expenses) { expense ->
+            items(items = expenses, key = { it.id }) { expense ->
                 ExpenseItem(
                     description = expense.description,
+                    modifier = Modifier.animateItem(),
                     onEditClick = { onExpenseAction(ExpensesAction.OnEditClick(expense.id)) },
                     onDeleteClick = { onExpenseAction(ExpensesAction.OnDeleteClick(expense.id)) },
                     onItemClick = { onExpenseAction(ExpensesAction.OnItemClick(expense.id)) }
