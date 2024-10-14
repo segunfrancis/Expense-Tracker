@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.segunfrancis.expensetracker.data.ExpenseEntity
 import com.segunfrancis.expensetracker.data.ExpenseTrackerDao
+import com.segunfrancis.expensetracker.getByteArraySizeInKB
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.channels.BufferOverflow
@@ -17,7 +18,6 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.lang.Exception
 import javax.inject.Inject
 
 @HiltViewModel
@@ -103,6 +103,12 @@ class AddExpenseViewModel @Inject constructor(
             } catch (e: Exception) {
                 _action.tryEmit(AddExpenseAction.ShowMessage("Enter a valid price"))
                 null
+            }
+            uiState.value.image?.let {
+                if (getByteArraySizeInKB(it) > 500.0) {
+                    _action.tryEmit(AddExpenseAction.ShowMessage("Selected image is too large.\nImage should not be more than 500kb"))
+                    return@launch
+                }
             }
             formatPrice?.let {
                 withContext(dispatcher) {

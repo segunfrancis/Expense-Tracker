@@ -39,3 +39,8 @@ fun uriToBitmap(context: Context, uri: Uri): Bitmap? {
         null
     }
 }
+
+fun getByteArraySizeInKB(byteArray: ByteArray): Double {
+    val sizeInBytes = byteArray.size
+    return sizeInBytes / 1024.0
+}
